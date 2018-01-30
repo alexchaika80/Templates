@@ -1,0 +1,39 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "IpAddress": {    
+            "value": "<Private IP Address>"
+        },
+        "existingVirtualNetworkRG":{
+            "value": "<Existing Virtual Network Resource Group Name>"
+        },
+        "existingVirtualNetworkName":{
+            "value": "<Existing Virtual Network Name>"
+        },
+        "existingSubnetName":{
+            "value": "<Existing Subnet Name>"
+        },
+        "existingStorageAccName":{
+            "value": "<Existing Storage Account Name>"
+        },
+        "adminUsername": {   
+            "value": "admin"
+        },
+        "adminPassword": {    
+            "value": "P@$$W0rd!"
+        },
+        "vmName":{
+            "value": "<VM Name>"
+        },
+        "osType": {
+            "value": "Windows" 
+        },
+        "osDiskSrcUri":{
+            "value": "<uri of the existed .vhd image>"
+        },
+        "vmSize": {
+            "value": "Standard_D2_v2"
+        }
+    }
+}

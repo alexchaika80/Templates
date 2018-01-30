@@ -1,0 +1,151 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "IPAddress": {
+            "type": "string",
+            "metadata": {
+              "description": "Static IP for VMs NIC."
+            }
+        },
+        "existingVirtualNetworkRG": {
+            "type": "string",
+            "metadata": {
+                "description": "Existing vnet RG."
+              }
+        },
+        "existingVirtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "Existing vnet name."
+              }
+        },
+        "existingSubnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Existing subnet name."
+              }
+        },
+        "vmName": {
+          "type": "string",
+          "metadata": {
+              "description": "The name for you VM."
+            }
+        },
+        "vmSize": {
+          "type": "string",
+          "defaultValue": "Standard_A2",
+          "metadata": {
+              "description": "VM t-shirt size."
+          }
+        },
+        "adminUsername": {
+          "type": "string",
+          "metadata": {
+            "description": "Username for the Virtual Machine."
+          }
+        },
+        "adminPassword": {
+          "type": "securestring",
+          "metadata": {
+            "description": "Password for the Virtual Machine."
+          }
+        },        
+        "osType": {
+          "type": "string",
+          "allowedValues": [
+            "Windows",
+            "Linux"
+          ],
+          "metadata": {
+            "description": "Type of OS on the existing vhd"
+          }
+        },
+        "existingStorageAccName": {
+          "type": "string",
+          "metadata": {
+              "description": "Existing Storage Acc name."
+            }
+        },
+       "osDiskSrcUri": {
+          "type": "string",
+          "metadata": {
+            "description": "Uri of the existing OS VHD in ARM standard or premium storage"
+          }
+        }       
+    },
+    "variables": {
+        "nicName": "[concat(parameters('vmName'),'-PriNic')]",
+        "existingVirtualNetworkId": "[resourceId(parameters('existingVirtualNetworkRG'), 'Microsoft.Network/virtualNetworks/', parameters('existingVirtualNetworkName'))]",
+        "existingSubnetId": "[concat(variables('existingVirtualNetworkId'),'/subnets/',parameters('existingSubnetName'))]",
+        "nicId": "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+        "OSDiskName": "[concat(parameters('vmName'),'-OSdisk')]",
+        "OSDiskUri": "[concat('https://',parameters('existingStorageAccName'),'.blob.core.windows.net/vhds/',variables('OSDiskName'),'.vhd')]"
+    },
+    "resources": [
+      {
+          "apiVersion": "2017-03-01",
+          "type": "Microsoft.Network/networkInterfaces",
+          "name": "[variables('nicName')]",
+          "location": "[resourceGroup().location]",
+          "properties": {
+            "ipConfigurations": [
+              {
+                "name": "ipconfig1",
+                "properties": {
+                  "privateIPAllocationMethod": "Static",
+                  "privateIPAddress": "[parameters('IPAddress')]",
+                  "subnet": {
+                    "id": "[variables('existingSubnetId')]"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "2017-03-30",
+          "type": "Microsoft.Compute/virtualMachines",
+          "name": "[parameters('vmName')]",
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "AddaTag": "Tag"
+          },
+          "dependsOn": [
+              "[variables('nicId')]"              
+          ],
+          "properties": {
+            "hardwareProfile": {
+              "vmSize": "[parameters('vmSize')]"
+            },
+            "osProfile": {
+              "computerName": "[parameters('vmName')]",
+              "adminUsername": "[parameters('adminUsername')]",
+              "adminPassword": "[parameters('adminPassword')]"
+            },
+            "storageProfile": {
+                "osDisk": {
+                "name": "[variables('OSDiskName')]",
+                "osType": "[parameters('osType')]",
+                "caching": "ReadWrite",
+                "image":{
+                  "uri": "[parameters('osDiskSrcUri')]"
+                },
+                "vhd": {
+                  "uri": "[variables('OSDiskUri')]"
+                },
+                "createOption": "FromImage"
+              }    
+            },
+            "networkProfile": {
+              "networkInterfaces": [
+                {
+                  "id": "[variables('nicId')]"
+                }
+              ]
+            }
+          }
+        }    
+    ],
+    "outputs": {}
+}
